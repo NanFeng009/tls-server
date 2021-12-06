@@ -53,8 +53,8 @@ int  yyparse();
 
 configuration:
 	| configuration common_sess
-	| configuration log_sess
-	| configuration certs_sess
+	| configuration LOG '{' log_sess '}'
+	| configuration CERTS '{' certs_sess '}'
 	;
 
 common_sess:
@@ -64,16 +64,23 @@ common_sess:
 	;
 
 log_sess:
+		|log_sess log_stmt;
+log_stmt:
 		LOGLEVEL LOG_LEVEL    { p_config->log.level    = $2; }
     |   LOGTYPE  LOG_TYPE     { p_config->log.type     = $2; }
     ;
 		
 certs_sess:
+		  |certs_sess cert_stmt;
+
+cert_stmt:
 		  KEY    STRING { p_config->certs.key     = $2; }
     |     CHAIN  STRING { p_config->certs.chain   = $2; }
     |     CERT     STRING { p_config->certs.ca      = $2; }
     ;
 
+opt_eol:
+	   | opt_eol '\n';
 
 %%
 

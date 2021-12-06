@@ -52,7 +52,14 @@ STRING       ([0-9A-Za-z_\/\.\-]+)
 "ca"       {  return CERT;   }
 
 "type"     { return LOGTYPE;  }
-level    { return LOGLEVEL; }
+"level"    { return LOGLEVEL; }
+
+"log"      {return LOG;}
+"certs"    {return CERTS;}
+
+[{}]    {return yytext[0];}
+
+
 
 
 
@@ -84,7 +91,7 @@ level    { return LOGLEVEL; }
 #.*       /* ignore comments */;
 [\n]*   /* ignore new lines */;
 [\t ]*    /* ignore whitespace */;
-[={}]
+[=]
 .         { printf("Mystery character %c\n", *yytext); }
 
 %%
