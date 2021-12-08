@@ -179,23 +179,23 @@ int client (void)
 					continue;
 				} else if (events[i].events & (EPOLLIN | EPOLLHUP)) {
 					err = SSL_read(ssl, buf, sizeof(buf) - 1);
-					buf[err] = '\0';
-					printf("> %s\n", buf);
-
 					if (err <= 0) {
-						if (err == SSL_ERROR_WANT_READ ||
-							err == SSL_ERROR_WANT_WRITE ||
-							err == SSL_ERROR_WANT_X509_LOOKUP) {
-							printf("Read could not complete. Will be invoked later.");
+						int read_err = SSL_get_error(ssl, err);
+						if (read_err == SSL_ERROR_WANT_READ ||
+							read_err == SSL_ERROR_WANT_WRITE ||
+							read_err == SSL_ERROR_WANT_X509_LOOKUP) {
+							printf("Read could not complete. Will be invoked later.\n");
 							break;
-						} else if(err == SSL_ERROR_ZERO_RETURN) {
-							printf("SSL_read: close notify received from peer");
+						} else if(read_err == SSL_ERROR_ZERO_RETURN) {
+							printf("SSL_read: close notify received from peer\n");
 							return 0;
 						} else {
-							printf("Error during SSL_read");
+							printf("Error during SSL_read %d %d\n", err, SSL_get_error(ssl, err));
 							exit(17);
 						}
 					}
+					buf[err] = '\0';
+					printf("> %s\n", buf);
 					// exit(0);
 				} else if (events[i].events & EPOLLOUT) {
 					err = SSL_write(ssl, "PING", strlen("PING"));
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 	config->address = strdup("127.0.0.1");
 	config->cert    = strdup("client.cert.pem");
 	config->key     = strdup("client.key.pem");
-	config->key     = strdup("ca.chain.pem");
+	config->ca     = strdup("ca.chain.pem");
 	config->verbose = 0;
 	struct option long_opts[] = {
 		{ "help",             no_argument, NULL, 'h' },

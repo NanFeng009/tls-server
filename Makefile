@@ -24,7 +24,7 @@ endef
 $(foreach bin,$(BINS),$(eval $(call BIN_template,$(bin))))
 
 $(BINS):
-	$(CC) $(CFLAGS) $(LIBS) $(LDFLAGS) -o $@ ${$@_OBJS}
+	$(CC) $(CFLAGS) $(LIBS) $(LDFLAGS) -o $@ ${$@_OBJS} $(LIBS)
 ifeq ($(PERF), 1)
 	strip $@
 endif

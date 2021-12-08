@@ -38,7 +38,7 @@ static struct {
 } SERVER_LOG = {
 	.console = NULL,
 	.ident   = NULL,
-	.level   = LOG_INFO
+	.level   = LOG_DEBUG
 };
 
 void log_open(const char *ident, const char *facility)
@@ -56,7 +56,7 @@ void log_open(const char *ident, const char *facility)
 	}
 	if (strcmp(facility, "stderr")  == 0
 	 || strcmp(facility, "console") == 0) {
-		SERVER_LOG.console = stderr;
+		SERVER_LOG.console = stdout;
 		return;
 	}
 

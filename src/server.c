@@ -75,6 +75,9 @@ create_socket(void)
 	if (bind(s, (struct sockaddr*)&(config->addr), sizeof(struct sockaddr_in)) < 0) {
 		logger(LOG_ERR, "Unable to bind (%i) %s", errno, strerror(errno));
 		exit(EXIT_FAILURE);
+	}else{
+		logger(LOG_ERR, "bin to ip (%s)", inet_ntoa(((struct sockaddr_in *)&(config->addr))->sin_addr));
+		logger(LOG_ERR, "bind to port(%d)", ntohs(((struct sockaddr_in *)&(config->addr))->sin_port));
 	}
 
 	if (listen(s, SOMAXCONN) < 0) {
@@ -232,6 +235,7 @@ send_msg_all(sessions_t *sessions, char *msg, int msg_size)
 {
 	for (int c = 0; c < sessions->peer_len; c++) {
 		SSL_write(sessions->peers[c]->ssl, msg, msg_size);
+		logger(LOG_DEBUG, "sending (%s) to %d peer", msg, c);
 	}
 
 	return 0;
@@ -341,6 +345,7 @@ server(void *data)
 					}
 					logger(LOG_DEBUG, "[%d] checking intercom message", id);
 					if (strncmp("bcast", buf, 5) == 0) {
+						logger(LOG_DEBUG, "[%d] sending (%s )intercom message", id, buf);
 						send_msg_all(sessions, buf + 5, 1024 - 5);
 					}
 					if (strncmp("reconnect", buf, 9) == 0) {
@@ -350,6 +355,7 @@ server(void *data)
 						}
 						goto UNLOOP;
 					}
+					logger(LOG_DEBUG, "[%d] received (%s ) from intercom message", id, buf);
 					memset(buf, 0, 1024);
 				} else if (events[n].data.fd == sfd) {
 					s = read(sfd, &fdsi, sizeof(struct signalfd_siginfo));
@@ -386,7 +392,7 @@ server(void *data)
 								strncat(imsg, msg, 1024 - 6);
 								for (int c = 0; c < config->workers; c++) {
 									if (c != id) {
-										logger(LOG_DEBUG, "sending to %d worker", c);
+										logger(LOG_DEBUG, "sending (%s) to %d worker", imsg, c);
 										if (send(intercom->pairs[c]->fd[0], imsg, 1024, 0) < 0) {
 											logger(LOG_ERR, "failed to send to worker %d (%i) %s", c, errno, strerror(errno));
 
@@ -518,6 +524,9 @@ int serve(config_t *conf)
 	logger(LOG_DEBUG, "main thread initialized");
 	for (;;) {
 		if ((nfds = epoll_wait(epollfd, events, SOMAXCONN, -1)) == -1) {
+			logger(LOG_ERR, "catastropic epoll_wait (%i) %s", errno, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
 			for (n = 0; n < nfds; ++n) {
 				if (events[n].events & EPOLLIN) {
 					if (events[n].data.fd == sfd) {
@@ -562,7 +571,6 @@ int serve(config_t *conf)
 					}
 				}
 			}
-		}
 	}
 
 	for (int i = 0; i < config->workers; i++)
